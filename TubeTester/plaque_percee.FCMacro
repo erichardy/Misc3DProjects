@@ -1,0 +1,49 @@
+import FreeCAD as App
+import Part
+
+# Créer un nouveau document
+doc = App.newDocument("Plaque_trous")
+
+# Dimensions de la plaque
+longueur = 200  # Longueur de la plaque (mm)
+largeur = 150   # Largeur de la plaque (mm)
+epaisseur = 4   # Épaisseur de la plaque (mm)
+
+# Dimensions des trous
+diametre_trou = 8      # Diamètre des trous (mm)
+distance_bord = 12     # Distance des trous au bord (mm)
+nombre_trous = 12      # Nombre de trous le long du bord
+
+# Créer la plaque
+plaques = App.ActiveDocument.addObject("Part::Box", "Plaque")
+plaques.Length = longueur
+plaques.Width = largeur
+plaques.Height = epaisseur
+
+# Positionner la plaque
+plaques.Placement = App.Placement(App.Vector(0, 0, 0), App.Rotation(0, 0, 0))
+
+# Ajouter les trous
+for i in range(nombre_trous):
+    # Calcul de la position de chaque trou
+    x_position = distance_bord + i * ((longueur - 2 * distance_bord) / (nombre_trous - 1))
+    y_position = distance_bord
+
+    # Créer un cylindre pour chaque trou
+    trou = App.ActiveDocument.addObject("Part::Cylinder", f"Trou_{i+1}")
+    trou.Radius = diametre_trou / 2
+    trou.Height = epaisseur
+    trou.Placement = App.Placement(App.Vector(x_position, y_position, 0), App.Rotation(0, 0, 0))
+
+    # Soustraire le cylindre de la plaque
+    if i == 0:
+        decoupe = App.ActiveDocument.addObject("Part::Cut", "Plaque_trous")
+        decoupe.Base = plaques
+        decoupe.Tool = trou
+    else:
+        decoupe = App.ActiveDocument.addObject("Part::Cut", f"Plaque_trous_{i+1}")
+        decoupe.Base = App.ActiveDocument.getObject(f"Plaque_trous_{i}")
+        decoupe.Tool = trou
+
+# Finaliser le modèle
+App.ActiveDocument.recompute()
